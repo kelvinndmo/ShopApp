@@ -5,9 +5,15 @@ import 'package:shopping/providers/products_provider.dart';
 import 'package:shopping/screens/edit_product_screen.dart';
 import 'package:shopping/widgets/app_drawer.dart';
 import 'package:shopping/widgets/user_product_item.dart';
+import 'package:provider/provider.dart';
 
 class UserProductScreen extends StatelessWidget {
   static const routeName = 'userProduct';
+
+  Future<void> _refreshProducts(BuildContext context) async {
+    await Provider.of<Products>(context).fetchProducts();
+  }
+
   @override
   Widget build(BuildContext context) {
     final productsData = Provider.of<Products>(context);
@@ -24,20 +30,23 @@ class UserProductScreen extends StatelessWidget {
           )
         ],
       ),
-      body: Padding(
-        padding: EdgeInsets.all(8),
-        child: ListView.builder(
-            itemCount: productsData.items.length,
-            itemBuilder: (_, index) => Column(
-                  children: [
-                    UserProductItem(
-                      id: productsData.items[index].id,
-                      imageUrl: productsData.items[index].imageUrl,
-                      title: productsData.items[index].title,
-                    ),
-                    Divider()
-                  ],
-                )),
+      body: RefreshIndicator(
+        onRefresh: () => _refreshProducts(context),
+        child: Padding(
+          padding: EdgeInsets.all(8),
+          child: ListView.builder(
+              itemCount: productsData.items.length,
+              itemBuilder: (_, index) => Column(
+                    children: [
+                      UserProductItem(
+                        id: productsData.items[index].id,
+                        imageUrl: productsData.items[index].imageUrl,
+                        title: productsData.items[index].title,
+                      ),
+                      Divider()
+                    ],
+                  )),
+        ),
       ),
     );
   }

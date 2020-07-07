@@ -18,8 +18,10 @@ class ProductItem extends StatelessWidget {
       child: GridTile(
         child: GestureDetector(
           onTap: () {
-            Navigator.of(context).push(
-                MaterialPageRoute(builder: (ctx) => ProductDetailScreen()));
+            Navigator.of(context)
+                .pushNamed(ProductDetailScreen.id, arguments: product.id);
+            // Navigator.of(context).push(
+            //     MaterialPageRoute(builder: (ctx) => ProductDetailScreen()));
           },
           child: Image.network(
             product.imageUrl,
@@ -38,8 +40,8 @@ class ProductItem extends StatelessWidget {
                 product.isFavourite ? Icons.favorite : Icons.favorite_border,
                 color: Colors.purple,
               ),
-              onPressed: () {
-                product.toggleFavouriteStatus();
+              onPressed: () async {
+                await product.toggleFavouriteStatus();
               },
             ),
           ),

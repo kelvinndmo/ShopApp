@@ -1,4 +1,8 @@
 import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+
+import 'package:shopping/models/exceptions.dart';
 
 class Product with ChangeNotifier {
   final String id;
@@ -16,8 +20,24 @@ class Product with ChangeNotifier {
       @required this.imageUrl,
       this.isFavourite = false});
 
-  void toggleFavouriteStatus() {
-    isFavourite = !isFavourite;
+  Future<void> toggleFavouriteStatus() async {
+    var status = isFavourite;
+    final url = 'https://milliefashions-d83c0.firebaseio.com/products/$id.json';
+    try {
+      isFavourite = !isFavourite;
+      notifyListeners();
+      final res = await http.patch(url,
+          body: json.encode({'isFavourite': isFavourite}));
+      if (res.statusCode >= 400) {
+        isFavourite = status;
+        notifyListeners();
+      }
+    } catch (e) {
+      isFavourite = status;
+      notifyListeners();
+      throw HttpException("There was an error favouring");
+    }
+
     notifyListeners();
   }
 }

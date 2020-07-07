@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shopping/screens/auth_screen.dart';
 import 'package:shopping/screens/orders_screen.dart';
 import 'package:shopping/screens/user_products.dart';
 
@@ -34,6 +35,13 @@ class AppDrawer extends StatelessWidget {
             onTap: () {
               Navigator.of(context)
                   .pushReplacementNamed(UserProductScreen.routeName);
+            },
+          ),
+          ListTile(
+            leading: Icon(Icons.edit),
+            title: Text('Login'),
+            onTap: () {
+              Navigator.of(context).pushReplacementNamed(AuthScreen.routeName);
             },
           )
         ],

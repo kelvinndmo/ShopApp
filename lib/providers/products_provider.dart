@@ -1,73 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:shopping/models/exceptions.dart';
 import 'package:shopping/models/product_model.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class Products with ChangeNotifier {
-  List<Product> _items = [
-    Product(
-      id: 'p1',
-      title: 'Red Shirt',
-      description: 'A red shirt - it is pretty red!',
-      price: 29.99,
-      imageUrl:
-          'https://images.unsplash.com/photo-1522338140262-f46f5913618a?ixlib=rb-1.2.1&auto=format&fit=crop&w=634&q=80',
-    ),
-    Product(
-      id: 'p2',
-      title: 'Trousers',
-      description: 'A nice pair of trousers.',
-      price: 59.99,
-      imageUrl:
-          'https://images.unsplash.com/photo-1503236823255-94609f598e71?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1050&q=80',
-    ),
-    Product(
-      id: 'p3',
-      title: 'Yellow Scarf',
-      description: 'Warm and cozy - exactly what you need for the winter.',
-      price: 19.99,
-      imageUrl:
-          'https://images.unsplash.com/photo-1522338242992-e1a54906a8da?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjY1MDE0fQ&auto=format&fit=crop&w=634&q=80',
-    ),
-    Product(
-      id: 'p4',
-      title: 'Nail Polish',
-      description: 'Nail Polish.',
-      price: 49.99,
-      imageUrl:
-          'https://images.unsplash.com/photo-1522337660859-02fbefca4702?ixlib=rb-1.2.1&auto=format&fit=crop&w=1049&q=80',
-    ),
-    Product(
-      id: 'p5',
-      title: 'Red Shirt',
-      description: 'A red shirt - it is pretty red!',
-      price: 29.99,
-      imageUrl:
-          'https://images.unsplash.com/photo-1522338140262-f46f5913618a?ixlib=rb-1.2.1&auto=format&fit=crop&w=634&q=80',
-    ),
-    Product(
-      id: 'p6',
-      title: 'Trousers',
-      description: 'A nice pair of trousers.',
-      price: 59.99,
-      imageUrl:
-          'https://images.unsplash.com/photo-1503236823255-94609f598e71?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1050&q=80',
-    ),
-    Product(
-      id: 'p7',
-      title: 'Yellow Scarf',
-      description: 'Warm and cozy - exactly what you need for the winter.',
-      price: 19.99,
-      imageUrl:
-          'https://images.unsplash.com/photo-1522338242992-e1a54906a8da?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjY1MDE0fQ&auto=format&fit=crop&w=634&q=80',
-    ),
-    Product(
-      id: 'p8',
-      title: 'Nail Polish',
-      description: 'Nail Polish.',
-      price: 49.99,
-      imageUrl:
-          'https://images.unsplash.com/photo-1522337660859-02fbefca4702?ixlib=rb-1.2.1&auto=format&fit=crop&w=1049&q=80',
-    ),
-  ];
+  List<Product> _items = [];
 
   var _showFavourites = false;
 
@@ -86,41 +24,93 @@ class Products with ChangeNotifier {
     return _items.firstWhere((element) => element.id == id);
   }
 
-  // void showFavouritesOnly() {
-  //   _showFavourites = true;
-  //   notifyListeners();
-  // }
+  Future<void> fetchProducts() async {
+    try {
+      const url = 'https://milliefashions-d83c0.firebaseio.com/products.json';
+      final response = await http.get(url);
 
-  // void showAll() {
-  //   _showFavourites = false;
-  //   notifyListeners();
-  // }
+      final List<Product> loadProducts = [];
 
-  void addProducts(Product product) {
-    final newProduct = Product(
+      final extractedData = json.decode(response.body) as Map<String, dynamic>;
+
+      extractedData.forEach((prodId, prodData) {
+        loadProducts.add(Product(
+            id: prodId,
+            title: prodData['title'],
+            description: prodData['description'],
+            price: prodData['price'],
+            isFavourite: prodData['isFavourite'],
+            imageUrl: prodData['imageUrl']));
+      });
+      _items = loadProducts;
+
+      notifyListeners();
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  Future<void> addProducts(Product product) async {
+    const url = 'https://milliefashions-d83c0.firebaseio.com/products.json';
+    try {
+      final response = await http.post(url,
+          body: json.encode({
+            'title': product.title,
+            'description': product.description,
+            'imageUrl': product.imageUrl,
+            'price': product.price,
+            'isFavourite': product.isFavourite
+          }));
+      final newProduct = Product(
         title: product.title,
         description: product.description,
         price: product.price,
         imageUrl: product.imageUrl,
-        id: DateTime.now().toString());
+        isFavourite: product.isFavourite,
+        id: json.decode(response.body)['name'],
+      );
 
-    _items.add(newProduct);
-    notifyListeners();
+      _items.add(newProduct);
+      notifyListeners();
+    } catch (e) {
+      throw e;
+    }
   }
 
-  void updateProduct(String id, Product newProduct) {
+  Future<void> updateProduct(String id, Product newProduct) async {
     final prodIndex = _items.indexWhere((prod) => prod.id == id);
+    final url = 'https://milliefashions-d83c0.firebaseio.com/products/$id.json';
+
     if (prodIndex >= 0) {
-      _items[prodIndex] = newProduct;
+      try {
+        await http.patch(url,
+            body: json.encode({
+              'title': newProduct.title,
+              'description': newProduct.description,
+              'imageUrl': newProduct.imageUrl,
+              'price': newProduct.price,
+            }));
+        _items[prodIndex] = newProduct;
+
+        notifyListeners();
+      } catch (e) {}
     } else {
       print("...");
     }
-
-    notifyListeners();
   }
 
-  void deleteProduct(String id) {
-    _items.removeWhere((prod) => id == prod.id);
+  Future<void> deleteProduct(String id) async {
+    final url = 'https://milliefashions-d83c0.firebaseio.com/products/$id.json';
+    final existingProductIndex = _items.indexWhere((prod) => id == prod.id);
+    var existingProduct = _items[existingProductIndex];
+    _items.removeAt(existingProductIndex);
     notifyListeners();
+    final response = await http.delete(url);
+    if (response.statusCode >= 400) {
+      _items.insert(existingProductIndex, existingProduct);
+      notifyListeners();
+      throw HttpException("Could not delete product");
+    }
+    existingProduct = null;
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shopping/providers/cart.dart';
 import 'package:shopping/providers/orders.dart';
 import 'package:shopping/providers/products_provider.dart';
+import 'package:shopping/screens/auth_screen.dart';
 import 'package:shopping/screens/cart_screen.dart';
 import 'package:shopping/screens/edit_product_screen.dart';
 import 'package:shopping/screens/orders_screen.dart';
@@ -35,13 +36,13 @@ class MyApp extends StatelessWidget {
 
             visualDensity: VisualDensity.adaptivePlatformDensity,
           ),
-          home: ProductOviewScreen(),
+          home: AuthScreen(),
           routes: {
             ProductDetailScreen.id: (ctx) => ProductDetailScreen(),
             CartScreen.routeName: (ctx) => CartScreen(),
             OrdersScreen.routeName: (ctx) => OrdersScreen(),
             UserProductScreen.routeName: (ctx) => UserProductScreen(),
-            EditProductScreen.routeName: (ctx) => EditProductScreen()
+            EditProductScreen.routeName: (ctx) => EditProductScreen(),
           }),
     );
   }
