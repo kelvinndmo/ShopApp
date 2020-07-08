@@ -20,14 +20,16 @@ class Product with ChangeNotifier {
       @required this.imageUrl,
       this.isFavourite = false});
 
-  Future<void> toggleFavouriteStatus() async {
+  Future<void> toggleFavouriteStatus(String token, String userId) async {
+    print(userId);
     var status = isFavourite;
-    final url = 'https://milliefashions-d83c0.firebaseio.com/products/$id.json';
+
+    final url =
+        'https://milliefashions-d83c0.firebaseio.com/userFavourites/$userId/$id.json?auth=$token';
     try {
       isFavourite = !isFavourite;
       notifyListeners();
-      final res = await http.patch(url,
-          body: json.encode({'isFavourite': isFavourite}));
+      final res = await http.put(url, body: json.encode(isFavourite));
       if (res.statusCode >= 400) {
         isFavourite = status;
         notifyListeners();

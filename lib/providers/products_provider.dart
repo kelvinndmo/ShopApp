@@ -8,6 +8,10 @@ class Products with ChangeNotifier {
   List<Product> _items = [];
 
   var _showFavourites = false;
+  final String token;
+  final String userId;
+
+  Products(this.token, this._items, this.userId);
 
   List<Product> get items {
     // if (_showFavourites) {
@@ -26,12 +30,21 @@ class Products with ChangeNotifier {
 
   Future<void> fetchProducts() async {
     try {
-      const url = 'https://milliefashions-d83c0.firebaseio.com/products.json';
+      final url =
+          'https://milliefashions-d83c0.firebaseio.com/products.json?auth=$token&orderBy="creatorId"&equalTo="$userId"';
       final response = await http.get(url);
 
       final List<Product> loadProducts = [];
 
       final extractedData = json.decode(response.body) as Map<String, dynamic>;
+
+      if (extractedData == null) {
+        return;
+      }
+      var favUrl =
+          'https://milliefashions-d83c0.firebaseio.com/userFavourites/$userId.json?auth=$token';
+      final favouriteResponse = await http.get(favUrl);
+      final favouriteData = json.decode(favouriteResponse.body);
 
       extractedData.forEach((prodId, prodData) {
         loadProducts.add(Product(
@@ -39,7 +52,8 @@ class Products with ChangeNotifier {
             title: prodData['title'],
             description: prodData['description'],
             price: prodData['price'],
-            isFavourite: prodData['isFavourite'],
+            isFavourite:
+                favouriteData == null ? false : favouriteData[prodId] ?? false,
             imageUrl: prodData['imageUrl']));
       });
       _items = loadProducts;
@@ -51,7 +65,8 @@ class Products with ChangeNotifier {
   }
 
   Future<void> addProducts(Product product) async {
-    const url = 'https://milliefashions-d83c0.firebaseio.com/products.json';
+    final url =
+        'https://milliefashions-d83c0.firebaseio.com/products.json?auth=$token';
     try {
       final response = await http.post(url,
           body: json.encode({
@@ -59,7 +74,7 @@ class Products with ChangeNotifier {
             'description': product.description,
             'imageUrl': product.imageUrl,
             'price': product.price,
-            'isFavourite': product.isFavourite
+            'creatorId': userId
           }));
       final newProduct = Product(
         title: product.title,
@@ -79,7 +94,8 @@ class Products with ChangeNotifier {
 
   Future<void> updateProduct(String id, Product newProduct) async {
     final prodIndex = _items.indexWhere((prod) => prod.id == id);
-    final url = 'https://milliefashions-d83c0.firebaseio.com/products/$id.json';
+    final url =
+        'https://milliefashions-d83c0.firebaseio.com/products/$id.json?auth=$token';
 
     if (prodIndex >= 0) {
       try {
@@ -100,7 +116,8 @@ class Products with ChangeNotifier {
   }
 
   Future<void> deleteProduct(String id) async {
-    final url = 'https://milliefashions-d83c0.firebaseio.com/products/$id.json';
+    final url =
+        'https://milliefashions-d83c0.firebaseio.com/products/$id.json?auth=$token';
     final existingProductIndex = _items.indexWhere((prod) => id == prod.id);
     var existingProduct = _items[existingProductIndex];
     _items.removeAt(existingProductIndex);
